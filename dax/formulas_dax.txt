@@ -1,0 +1,163 @@
+-- Conta a quantidade de derrotas para um time selecionado ou para todos os times
+Derrotas = 
+VAR TimeSelecionado = SELECTEDVALUE('TimesÚnicos'[Times]) -- Obtém o time selecionado pelo usuário
+RETURN
+IF(
+    ISBLANK(TimeSelecionado),  -- Se nenhum time for selecionado, calcula derrotas para todos
+    CALCULATE(COUNTROWS('Premier League'), 'Premier League'[Resultado] = "Visitante") +
+    CALCULATE(COUNTROWS('Premier League'), 'Premier League'[Resultado] = "Mandante"),
+    -- Se um time for selecionado, conta as derrotas como mandante e visitante
+    CALCULATE(
+        COUNTROWS('Premier League'),
+        'Premier League'[Resultado] = "Visitante",
+        'Premier League'[Time da Casa] = TimeSelecionado
+    ) + 
+    CALCULATE(
+        COUNTROWS('Premier League'),
+        'Premier League'[Resultado] = "Mandante",
+        'Premier League'[Time Visitante] = TimeSelecionado
+    )
+)
+
+-- Conta a quantidade de empates para um time selecionado ou para todos os times
+Empates = 
+VAR TimeSelecionado = SELECTEDVALUE('TimesÚnicos'[Times])
+RETURN
+IF(
+    ISBLANK(TimeSelecionado),  -- Se nenhum time for selecionado, conta todos os empates
+    CALCULATE(COUNTROWS('Premier League'), 'Premier League'[Resultado] = "Empate"),
+    -- Se um time for selecionado, conta os empates como mandante e visitante
+    CALCULATE(
+        COUNTROWS('Premier League'),
+        'Premier League'[Resultado] = "Empate",
+        'Premier League'[Time da Casa] = TimeSelecionado
+    ) + 
+    CALCULATE(
+        COUNTROWS('Premier League'),
+        'Premier League'[Resultado] = "Empate",
+        'Premier League'[Time Visitante] = TimeSelecionado
+    )
+)
+
+-- Calcula a média de gols marcados por partida
+Média de Gols = 
+DIVIDE(
+    [Total de Gols Marcados],  -- Soma total de gols marcados
+    [Total de Partidas]  -- Divide pelo número total de partidas
+)
+
+-- Calcula a pontuação de um time, considerando 3 pontos por vitória e 1 por empate
+Pontuação = [Vitórias] * 3 + [Empates]
+
+-- Calcula o saldo de gols (gols marcados - gols sofridos)
+Saldo de Gols = [Total de Gols Marcados] - [Total de Gols Sofridos]
+
+-- Calcula o total de gols marcados por um time ou por todos os times
+Total de Gols Marcados = 
+VAR TimeSelecionado = SELECTEDVALUE('TimesÚnicos'[Times]) 
+RETURN 
+IF(
+    ISBLANK(TimeSelecionado),  -- Se nenhum time for selecionado, soma os gols de todos os times
+    SUM('Premier League'[Gols do Time da Casa]) + SUM('Premier League'[Gols do Time Visitante]), 
+    -- Se um time for selecionado, soma apenas os gols marcados por ele como mandante e visitante
+    CALCULATE(
+        SUM('Premier League'[Gols do Time da Casa]),
+        'Premier League'[Time da Casa] = TimeSelecionado
+    ) + 
+    CALCULATE(
+        SUM('Premier League'[Gols do Time Visitante]),
+        'Premier League'[Time Visitante] = TimeSelecionado
+    )
+)
+
+-- Calcula o total de gols sofridos por um time selecionado
+Total de Gols Sofridos = 
+CALCULATE(
+    SUM('Premier League'[Gols do Time Visitante]),
+    'Premier League'[Time da Casa] = SELECTEDVALUE('TimesÚnicos'[Times])
+) + 
+CALCULATE(
+    SUM('Premier League'[Gols do Time da Casa]),
+    'Premier League'[Time Visitante] = SELECTEDVALUE('TimesÚnicos'[Times])
+)
+
+-- Conta o total de partidas jogadas por um time ou por todos os times
+Total de Partidas = 
+VAR TimeSelecionado = SELECTEDVALUE('TimesÚnicos'[Times])
+RETURN
+IF(
+    NOT ISBLANK(TimeSelecionado),
+    -- Se um time for selecionado, conta apenas suas partidas
+    CALCULATE(
+        COUNTA('Premier League'[Data]),
+        FILTER(
+            'Premier League',
+            'Premier League'[Time da Casa] = TimeSelecionado ||
+            'Premier League'[Time Visitante] = TimeSelecionado
+        )
+    ),
+    -- Se nenhum time for selecionado, conta todas as partidas da Premier League
+    CALCULATE(
+        COUNTA('Premier League'[Data]),
+        ALL('TimesÚnicos'[Times])
+    )
+)
+
+-- Conta a quantidade de vitórias para um time selecionado ou para todos os times
+Vitórias = 
+VAR TimeSelecionado = SELECTEDVALUE('TimesÚnicos'[Times])
+RETURN
+IF(
+    ISBLANK(TimeSelecionado),  -- Se nenhum time for selecionado, conta todas as vitórias
+    CALCULATE(COUNTROWS('Premier League'), 'Premier League'[Resultado] = "Mandante") +
+    CALCULATE(COUNTROWS('Premier League'), 'Premier League'[Resultado] = "Visitante"),
+    -- Se um time for selecionado, conta suas vitórias como mandante e visitante
+    CALCULATE(
+        COUNTROWS('Premier League'),
+        'Premier League'[Resultado] = "Mandante",
+        'Premier League'[Time da Casa] = TimeSelecionado
+    ) + 
+    CALCULATE(
+        COUNTROWS('Premier League'),
+        'Premier League'[Resultado] = "Visitante",
+        'Premier League'[Time Visitante] = TimeSelecionado
+    )
+)
+
+-- Conta a quantidade de vitórias em casa para um time selecionado ou para todos os times
+Vitórias em Casa = 
+VAR TimeSelecionado = SELECTEDVALUE('TimesÚnicos'[Times])
+RETURN
+IF(
+    ISBLANK(TimeSelecionado),
+    -- Se nenhum time for selecionado, soma todas as vitórias em casa
+    CALCULATE(
+        COUNTROWS('Premier League'),
+        'Premier League'[Resultado] = "Mandante"
+    ),
+    -- Se um time for selecionado, soma apenas suas vitórias como mandante
+    CALCULATE(
+        COUNTROWS('Premier League'),
+        'Premier League'[Resultado] = "Mandante",
+        'Premier League'[Time da Casa] = TimeSelecionado
+    )
+)
+
+-- Conta a quantidade de vitórias fora de casa para um time selecionado ou para todos os times
+Vitórias Fora = 
+VAR TimeSelecionado = SELECTEDVALUE('TimesÚnicos'[Times])
+RETURN
+IF(
+    ISBLANK(TimeSelecionado),
+    -- Se nenhum time for selecionado, soma todas as vitórias como visitante
+    CALCULATE(
+        COUNTROWS('Premier League'),
+        'Premier League'[Resultado] = "Visitante"
+    ),
+    -- Se um time for selecionado, soma apenas suas vitórias como visitante
+    CALCULATE(
+        COUNTROWS('Premier League'),
+        'Premier League'[Resultado] = "Visitante",
+        'Premier League'[Time Visitante] = TimeSelecionado
+    )
+)
